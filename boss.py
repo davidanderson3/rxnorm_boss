@@ -177,7 +177,24 @@ def compute_stats(rows: List[dict]) -> dict:
     boss_ai_with_ai = sum(1 for r in rows if "AI" in r["boss_from"] and len(r["ai"]) > 0)
     boss_am_with_am = sum(1 for r in rows if "AM" in r["boss_from"] and len(r["am"]) > 0)
 
+    # rows where AI and AM lists both exist but differ
+    def _ai_am_sets(r):
+        ai_set = {x.get("rxcui") for x in r["ai"] if x.get("rxcui")}
+        am_set = {x.get("rxcui") for x in r["am"] if x.get("rxcui")}
+        return ai_set, am_set
+
+    diff_rows = []
+    for r in rows:
+        ai_set, am_set = _ai_am_sets(r)
+        if ai_set and am_set and ai_set != am_set:
+            diff_rows.append(r)
+
+    diff = len(diff_rows)
+    boss_ai_diff = sum(1 for r in diff_rows if "AI" in r["boss_from"])
+    boss_am_diff = sum(1 for r in diff_rows if "AM" in r["boss_from"])
+
     def pct(x): return (100.0 * x / n) if n else 0.0
+    def pct_diff(x): return (100.0 * x / diff) if diff else 0.0
 
     return {
         "total_groups": n,
@@ -192,6 +209,15 @@ def compute_stats(rows: List[dict]) -> dict:
         "boss_from_missing": {"count": boss_none, "pct": pct(boss_none)},
         "boss_AI_and_AI_present": {"count": boss_ai_with_ai, "pct": pct(boss_ai_with_ai)},
         "boss_AM_and_AM_present": {"count": boss_am_with_am, "pct": pct(boss_am_with_am)},
+        "ai_am_different": {"count": diff, "pct": pct(diff)},
+        "boss_from_AI_when_ai_am_different": {
+            "count": boss_ai_diff,
+            "pct": pct_diff(boss_ai_diff),
+        },
+        "boss_from_AM_when_ai_am_different": {
+            "count": boss_am_diff,
+            "pct": pct_diff(boss_am_diff),
+        },
     }
 
 def load_data(base: Path = Path(__file__).parent):
@@ -313,6 +339,9 @@ function renderStats(){
     ["Has AI", STATS.has_ai.count, pct(STATS.has_ai.pct)],
     ["Has AM", STATS.has_am.count, pct(STATS.has_am.pct)],
     ["Has both AI & AM", STATS.has_both_ai_am.count, pct(STATS.has_both_ai_am.pct)],
+    ["AI & AM differ", STATS.ai_am_different.count, pct(STATS.ai_am_different.pct)],
+    ["When AI≠AM: BOSS_FROM = AI", STATS.boss_from_AI_when_ai_am_different.count, pct(STATS.boss_from_AI_when_ai_am_different.pct)],
+    ["When AI≠AM: BOSS_FROM = AM", STATS.boss_from_AM_when_ai_am_different.count, pct(STATS.boss_from_AM_when_ai_am_different.pct)],
     ["AI only", STATS.ai_only.count, pct(STATS.ai_only.pct)],
     ["AM only", STATS.am_only.count, pct(STATS.am_only.pct)],
     ["Neither AI nor AM", STATS.neither_ai_nor_am.count, pct(STATS.neither_ai_nor_am.pct)],
