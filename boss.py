@@ -403,7 +403,7 @@ function render(){
   });
 
   document.getElementById("pageInfo").textContent =
-    \`Page \${state.page} of \${pages} — \${total} group\${total===1?"":"s"}\`;
+    `Page ${state.page} of ${pages} — ${total} group${total===1?"":"s"}`;
   document.getElementById("prevBtn").disabled = state.page<=1;
   document.getElementById("nextBtn").disabled = state.page>=pages;
 }
@@ -428,16 +428,18 @@ render();
 def _js_escape(s: str) -> str:
     """Escape JSON for embedding inside a <script> tag.
 
-    Browsers treat certain characters (U+2028, U+2029, ``</``) specially when
-    parsing JavaScript inside HTML.  If these appear unescaped in our JSON data
-    the generated ``rxnorm_boss_view.html`` can produce ``SyntaxError`` when
-    loaded in a browser.  ``json.dumps`` with ``ensure_ascii=False`` will emit
-    those characters verbatim, so we replace them with escaped sequences that
-    JavaScript can safely evaluate.
+    Browsers treat certain characters (U+2028, U+2029, ``</``, ``<!--``, ``-->``)
+    specially when parsing JavaScript inside HTML. If these appear unescaped in
+    our JSON data the generated ``rxnorm_boss_view.html`` can produce
+    ``SyntaxError`` when loaded in a browser. ``json.dumps`` with
+    ``ensure_ascii=False`` will emit those characters verbatim, so we replace
+    them with escaped sequences that JavaScript can safely evaluate.
     """
     return (
         s.replace("\u2028", "\\u2028")
          .replace("\u2029", "\\u2029")
+         .replace("<!--", "<\\!--")
+         .replace("-->", "--\\>")
          .replace("</", "<\\/")
     )
 
