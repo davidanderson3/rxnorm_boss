@@ -27,6 +27,17 @@ class ComputeStatsTests(unittest.TestCase):
             stats["boss_from_AM_when_ai_am_different"]["pct"], 33.333333, places=5
         )
 
+    def test_parents_with_multiple_scdcs(self):
+        rows = [
+            {"parent": {"rxcui": "10"}, "scdc": {"rxcui": "100"}, "ai": [], "am": [], "boss_from": []},
+            {"parent": {"rxcui": "10"}, "scdc": {"rxcui": "101"}, "ai": [], "am": [], "boss_from": []},
+            {"parent": {"rxcui": "11"}, "scdc": {"rxcui": "102"}, "ai": [], "am": [], "boss_from": []},
+        ]
+        stats = compute_stats(rows)
+        self.assertEqual(stats["parents_with_multiple_scdcs"]["count"], 1)
+        parents = {p["rxcui"] for p in stats["parents_with_multiple_scdcs"]["parents"]}
+        self.assertEqual(parents, {"10"})
+
 
 if __name__ == "__main__":
     unittest.main()
