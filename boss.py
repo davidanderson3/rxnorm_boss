@@ -194,6 +194,21 @@ def compute_stats(rows: List[dict]) -> dict:
         "boss_AM_and_AM_present": {"count": boss_am_with_am, "pct": pct(boss_am_with_am)},
     }
 
+def load_data(base: Path = Path(__file__).parent):
+    """Load grouped BoSS data and statistics from RRF files.
+
+    Parameters
+    ----------
+    base: Path
+        Directory containing RXNSAT.RRF and RXNCONSO.RRF.
+    """
+    rxnsat = base / "RXNSAT.RRF"
+    rxnconso = base / "RXNCONSO.RRF"
+    primary, by_tty = load_labels(rxnconso)
+    rows = build_groups(rxnsat, primary, by_tty)
+    stats = compute_stats(rows)
+    return rows, stats
+
 # ---------- HTML ----------
 HTML_TEMPLATE = """<!doctype html>
 <html lang="en">
@@ -418,13 +433,8 @@ def write_html(out_path: Path, data: list, stats: dict):
 
 def main():
     base = Path(__file__).parent
-    rxnsat = base / "RXNSAT.RRF"
-    rxnconso = base / "RXNCONSO.RRF"
     out_html = base / "rxnorm_boss_view.html"
-
-    primary, by_tty = load_labels(rxnconso)
-    rows = build_groups(rxnsat, primary, by_tty)
-    stats = compute_stats(rows)
+    rows, stats = load_data(base)
     write_html(out_html, rows, stats)
     print(f"✅ Wrote {out_html} with {len(rows)} Parent×SCDC rows.")
 
