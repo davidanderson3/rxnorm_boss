@@ -425,10 +425,29 @@ render();
 </html>
 """
 
+def _js_escape(s: str) -> str:
+    """Escape JSON for embedding inside a <script> tag.
+
+    Browsers treat certain characters (U+2028, U+2029, ``</``) specially when
+    parsing JavaScript inside HTML.  If these appear unescaped in our JSON data
+    the generated ``rxnorm_boss_view.html`` can produce ``SyntaxError`` when
+    loaded in a browser.  ``json.dumps`` with ``ensure_ascii=False`` will emit
+    those characters verbatim, so we replace them with escaped sequences that
+    JavaScript can safely evaluate.
+    """
+    return (
+        s.replace("\u2028", "\\u2028")
+         .replace("\u2029", "\\u2029")
+         .replace("</", "<\\/")
+    )
+
+
 def write_html(out_path: Path, data: list, stats: dict):
-    html = (HTML_TEMPLATE
-            .replace("__DATA__", json.dumps(data, ensure_ascii=False))
-            .replace("__STATS__", json.dumps(stats, ensure_ascii=False)))
+    html = (
+        HTML_TEMPLATE
+        .replace("__DATA__", _js_escape(json.dumps(data, ensure_ascii=False)))
+        .replace("__STATS__", _js_escape(json.dumps(stats, ensure_ascii=False)))
+    )
     out_path.write_text(html, encoding="utf-8")
 
 def main():
