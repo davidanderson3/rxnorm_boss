@@ -193,6 +193,19 @@ def compute_stats(rows: List[dict]) -> dict:
     boss_ai_diff = sum(1 for r in diff_rows if "AI" in r["boss_from"])
     boss_am_diff = sum(1 for r in diff_rows if "AM" in r["boss_from"])
 
+    # parents that reference more than one distinct SCDC
+    parent_scdc_map = {}
+    for r in rows:
+        parent_rxcui = r.get("parent", {}).get("rxcui")
+        scdc_rxcui = r.get("scdc", {}).get("rxcui")
+        if parent_rxcui and scdc_rxcui:
+            parent_scdc_map.setdefault(
+                parent_rxcui, {"parent": r["parent"], "scdcs": set()}
+            )["scdcs"].add(scdc_rxcui)
+    multi_scdc_parents = [
+        info["parent"] for info in parent_scdc_map.values() if len(info["scdcs"]) > 1
+    ]
+
     def pct(x): return (100.0 * x / n) if n else 0.0
     def pct_diff(x): return (100.0 * x / diff) if diff else 0.0
 
@@ -217,6 +230,10 @@ def compute_stats(rows: List[dict]) -> dict:
         "boss_from_AM_when_ai_am_different": {
             "count": boss_am_diff,
             "pct": pct_diff(boss_am_diff),
+        },
+        "parents_with_multiple_scdcs": {
+            "count": len(multi_scdc_parents),
+            "parents": multi_scdc_parents,
         },
     }
 
